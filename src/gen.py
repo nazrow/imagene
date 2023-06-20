@@ -4,6 +4,7 @@ import time
 import random
 import torch
 import traceback
+import tqdm
 
 from secretics import cache_dir, root, basic_negation, special_negation, quality_requirements
 
@@ -96,7 +97,7 @@ for roll in range(limits['total']):
     else:
         negative_prompt = None
 
-    file_prompt += f' ({negative_prompt})' if negative_prompt else ''
+    file_prompt = f'{gen_prompt} ({negative_prompt})' if negative_prompt else gen_prompt
     file_prompt = file_prompt[:180] + '...' if len(file_prompt) > 180 else file_prompt
 
     try:
@@ -133,9 +134,8 @@ for roll in range(limits['total']):
     if rolls['prompt']:
         try:
             print('Continue with prompt?')
-            for i in range(5):
-                print(f'{2.5 - i * 0.5} seconds left...')
-                time.sleep(.25)
+            for i in tqdm.trange(25):
+                time.sleep(.1)
             print('Prompt continues')
         except KeyboardInterrupt:
             rolls['prompt'] = 0
