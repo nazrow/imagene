@@ -24,6 +24,10 @@ async def post(context):
                 parse_mode='MarkdownV2'
             )
             _file = file if len(file) < 100 else f'{file[:90]}... — {random.randint(1, 9999)}'
+            try:
+                os.remove(f'{posting_dir}/{_file.replace(".jpg", " POSTED.jpg")}')
+            except:
+                pass
             os.rename(f'{posting_dir}/{file}', f'{posting_dir}/{_file.replace(".jpg", " POSTED.jpg")}')
             wait = random.randint(1, 5000)
             print(f'Waiting for {wait} secs...')
@@ -31,6 +35,8 @@ async def post(context):
         except:
             print(prompt)
             traceback.print_exc()
+            wait = random.randint(1000, 10000)
+            await asyncio.sleep(wait)
 
 
 async def start_posting(context):
