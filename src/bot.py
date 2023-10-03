@@ -23,7 +23,7 @@ async def post(context):
                 caption=prompt,
                 parse_mode='MarkdownV2'
             )
-            _file = file if len(file) < 100 else f'{file[:90]}... — {random.randint(1, 9999)}'
+            _file = file if len(file) < 100 else f'{file[:90]}... — {random.randint(1, 9999)}.jpg'
             try:
                 os.remove(f'{posting_dir}/{_file.replace(".jpg", " POSTED.jpg")}')
             except:
