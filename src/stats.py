@@ -30,9 +30,15 @@ class Tech:
         parts = string.split()
         for part in parts:
             if part.startswith('ST'):
-                self.steps = int(part[2:])
+                try:
+                    self.steps = int(part[2:])
+                except:
+                    pass
             if part.startswith('TM'):
-                self.time = int(part[2:])
+                try:
+                    self.time = int(part[2:])
+                except:
+                    pass
             if part in ['1.4', '1.5', '2.0', '2.1']:
                 self.version = part
             if not re.search(r'[0-9]', part):
@@ -117,20 +123,28 @@ for subdir in subdirs:
             files.append(File(subdir, filename))
 print('Files parsed')
 
-for good in [True, False]:
-    for word in tqdm(vocab):
-        for variation in [word.clean, word.multi(word.clean)]:
-            occurences = all_prompts[good].count(f' {variation} ')
-            word.count(good, occurences)
-print('Vocab occurences counted')
+# for good in [True, False]:
+#     for word in tqdm(vocab):
+#         for variation in [word.clean, word.multi(word.clean)]:
+#             occurences = all_prompts[good].count(f' {variation} ')
+#             word.count(good, occurences)
+# print('Vocab occurences counted')
 
-vocab = sorted(vocab, key=lambda x:( x.tags, (-1)*x.good/x.occurences))
-with open(f'{vocab_location}.new', 'w') as file:
-    for entry in vocab:
-        file.write(f'{" ".join(entry.tags)}\t{entry.good/entry.occurences:.4f}\t{entry.value}\t{" ".join(entry.joiners)}\t{" ".join(entry.qualities)}\n')
-    file.write('chim\t0.0500\t?\t\tbeautychar bodyparts wearables handheld furniture vehicle action mood agesmall agebig armoredness wealth mood myst nationality burn')
-print('Vocabulary exported')
+# vocab = sorted(vocab, key=lambda x:( x.tags, (-1)*x.good/x.occurences))
+# with open(f'{vocab_location}.new', 'w') as file:
+#     for entry in vocab:
+#         file.write(f'{" ".join(entry.tags)}\t{entry.good/entry.occurences:.4f}\t{entry.value}\t{" ".join(entry.joiners)}\t{" ".join(entry.qualities)}\n')
+#     file.write('chim\t0.0500\t?\t\tbeautychar bodyparts wearables handheld furniture vehicle action mood agesmall agebig armoredness wealth mood myst nationality burn')
+# print('Vocabulary exported')
 
 schedulers_list = sorted(list(schedulers.values()), key=lambda x: (-1)*x[1]/x[0] if x[0] else 999)
 for entry in schedulers_list:
     print(f'{entry[2]} ({entry[1]/entry[0] if entry[0] else -1:.3f})')
+
+step_ranges = {10*i: [0] for i in range(20)}
+for file in files:
+    if file.tech.steps is not None:
+        steps = int(file.tech.steps / 10) * 10
+        step_ranges[steps].append(1 if file.good else 0)
+for steps, values in step_ranges.items():
+    print(f'{steps}...{steps+9}: {sum(values)/len(values)} ({sum(values)}/{len(values)})')

@@ -4,7 +4,7 @@ import traceback
 
 from typing import List, Optional, Union
 
-from secretics import excluded_words, excluded_constructions, excluded_additions, vocab_location
+from secretics import excluded_words, excluded_constructions, excluded_additions, vocab_location, root
 
 
 class Word:
@@ -242,7 +242,7 @@ def prompt_gen():
 
 
 def get_prompt():
-    with open('C:/Users/nazro/YandexDisk/StableDiffusion/Txts/Prompts.txt', 'r+') as file:
+    with open(f'{root}/Txts/Prompts.txt', 'r+') as file:
         lines = file.readlines()
         file.seek(0)
         file.truncate()

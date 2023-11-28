@@ -12,9 +12,7 @@ os.environ['XDG_CACHE_HOME'] = cache_dir
 os.environ['HF_HOME'] = f'{cache_dir}/huggingface'
 os.environ['TRANSFORMERS_CACHE'] = f'{cache_dir}/huggingface/transformers'
 
-from diffusers import StableDiffusionPipeline, DDIMScheduler, DPMSolverMultistepScheduler, DPMSolverSinglestepScheduler, \
-    EulerAncestralDiscreteScheduler, EulerDiscreteScheduler, HeunDiscreteScheduler, KDPM2AncestralDiscreteScheduler, \
-    KDPM2DiscreteScheduler, PNDMScheduler, StableDiffusionLatentUpscalePipeline
+from diffusers import DiffusionPipeline, AutoencoderKL
 from pytorch_lightning import seed_everything
 from transformers import logging as tl
 
@@ -25,23 +23,22 @@ outdir = f'{root}/New'
 
 tl.set_verbosity_error()
 torch.cuda.empty_cache()
-generator = StableDiffusionPipeline.from_pretrained('runwayml/stable-diffusion-v1-5', torch_dtype=torch.float16, safety_checker=None)
-schedulers = [
-    ('EADS', 0.404, EulerAncestralDiscreteScheduler),
-    ('DPMS', 0.069, DPMSolverSinglestepScheduler),
-    ('KDPA', 0.061, KDPM2AncestralDiscreteScheduler),
-    ('DDIM', 0.389, DDIMScheduler),
-    ('EUDS', 0.063, EulerDiscreteScheduler),
-    ('HEDS', 0.158, HeunDiscreteScheduler),
-    ('DPMM', 0.045, DPMSolverMultistepScheduler),
-    ('KDPM', 0.035, KDPM2DiscreteScheduler),
-    ('PNDM', 0.036, PNDMScheduler)
-]
-schedulers_limit = sum(entry[1] for entry in schedulers)
-generator = generator.to("cuda")
-upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained("stabilityai/sd-x2-latent-upscaler", torch_dtype=torch.float16)
-upscaler = upscaler.to("cuda")
-upscaler.enable_attention_slicing()
+vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
+base = DiffusionPipeline.from_pretrained(
+    "stabilityai/stable-diffusion-xl-base-1.0",
+    vae=vae,
+    torch_dtype=torch.float16,
+    variant="fp16"
+)
+base.to("cuda")
+refiner = DiffusionPipeline.from_pretrained(
+    "stabilityai/stable-diffusion-xl-refiner-1.0",
+    text_encoder_2=base.text_encoder_2,
+    vae=base.vae,
+    torch_dtype=torch.float16,
+    variant="fp16"
+)
+refiner.to("cuda")
 
 limits = {'total': random.randint(3000, 5000)}
 rolls = {'seed': 0, 'prompt': 0}
@@ -50,7 +47,7 @@ for roll in range(limits['total']):
     torch.cuda.empty_cache()
 
     if not rolls['seed']:
-        limits['seed'] = random.randint(1, 10)
+        limits['seed'] = random.randint(20, 500)
         rolls['seed'] = 1
         seed = random.randint(1, 1000000)
         seed_everything(seed)
@@ -67,17 +64,16 @@ for roll in range(limits['total']):
         limits['prompt'] = random.randint(minimum, minimum * 2)
         rolls['prompt'] = 1
 
-    steps = random.randint(10, 130)
+    steps = random.randint(20, 200)
     # size = random.randint(130, 135)
     # ratio = random.uniform(.5, 2.2)
     # if random.random() > 0.4:
     #     ratio = ratio ** 0.5
     # height = round((size/ratio)**0.5)
     # width = round(size/height)
-    height = 10
-    width = 13
-    eta = random.uniform(0.75, 0.95)
-    scale = random.uniform(6, 11)
+    height = 1280
+    width = 1800
+    noise = random.uniform(0.3, 0.99)
     gen_prompt = raw_prompt
     if selectors:
         for selector in selectors:
@@ -104,29 +100,34 @@ for roll in range(limits['total']):
 
     try:
         stopwatch = time.time()
-        coin = random.uniform(0, schedulers_limit*0.99)
-        random.shuffle(schedulers)
-        for entry in schedulers:
-            coin -= entry[1]
-            if coin < 0:
-                scheduler = entry[0]
-                generator.scheduler = entry[2].from_config(generator.scheduler.config)
-                break
         print(f'\n\n\n'
               f'     {roll+1:>4} of {limits["total"]:>4}{"" if roll else " — R E S T A R T E D + R E I N I T I A L I Z E D"}\n'
               f'{rolls["prompt"]:>3} of {limits["prompt"] - 1:>3} — {"NEG " if negative_prompt else ""}{gen_prompt[:70] + "..." if len(gen_prompt) > 70 else gen_prompt}{" — NEW PROMPT" if rolls["prompt"] == 1 else ""}\n'
-              f'{steps:>7} STEPS, {scale:>7.2f} SCALE, {eta:>7.2f} ETA, {scheduler}\n'
+              f'{steps:>7} STEPS, {noise:>7.2f} NOISE\n'
               f'{width:>2} × {height:>2} DIMENSIONS\n')
-        latents = generator(gen_prompt, height * 64, width * 64, steps, scale, eta=eta, negative_prompt=negative_prompt, output_type='latent').images
-        hires = upscaler(prompt=gen_prompt, image=latents, num_inference_steps=random.randint(20, 60), guidance_scale=0).images[0]
-        hires.save(f'{outdir}/{file_prompt} — {scheduler} ST{steps} TM{int(time.time() - stopwatch)} {int(time.time()) % 10000}.jpg')
+
+        image = base(
+            prompt=gen_prompt,
+            negative_prompt=negative_prompt,
+            height=height, width=width, num_inference_steps=steps,
+            denoising_end=noise,
+            output_type="latent",
+        ).images
+        image = refiner(
+            prompt=gen_prompt,
+            negative_prompt=negative_prompt,
+            height=height, width=width, num_inference_steps=steps,
+            denoising_start=noise,
+            image=image,
+        ).images[0]
+        image.save(f'{outdir}/{file_prompt} — ST{steps} TM{int(time.time() - stopwatch)} NS{noise:.2f} {int(time.time()) % 10000}.jpg')
 
         for key in ['prompt', 'seed']:
             rolls[key] += 1
 
     except Exception as e:
-        # print(str(e))
-        # print(traceback.format_exc())
+        print(str(e))
+        print(traceback.format_exc())
         print('F A I L E D')
 
     for key in ['prompt', 'seed']:
