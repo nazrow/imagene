@@ -12,6 +12,7 @@ from prompts import clean_filename
 async def post(context):
     while True:
         files = [f for f in os.listdir(posting_dir) if f.endswith('.jpg') and not 'POSTED' in f]
+        print(f'{len(files)} unposted pics left...')
         if len(files) == 0:
             break
         file = random.choice(files)
@@ -29,7 +30,7 @@ async def post(context):
             except:
                 pass
             os.rename(f'{posting_dir}/{file}', f'{posting_dir}/{_file.replace(".jpg", " POSTED.jpg")}')
-            wait = random.randint(1, 5000)
+            wait = random.randint(1, 1000)
             print(f'Waiting for {wait} secs...')
             await asyncio.sleep(wait)
         except:

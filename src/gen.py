@@ -117,8 +117,9 @@ for roll in range(limits['total']):
               f'{rolls["prompt"]:>3} of {limits["prompt"] - 1:>3} — {"NEG " if negative_prompt else ""}{gen_prompt[:70] + "..." if len(gen_prompt) > 70 else gen_prompt}{" — NEW PROMPT" if rolls["prompt"] == 1 else ""}\n'
               f'{steps:>7} STEPS, {scale:>7.2f} SCALE, {eta:>7.2f} ETA, {scheduler}\n'
               f'{width:>2} × {height:>2} DIMENSIONS\n')
-        latents = generator(gen_prompt, height * 64, width * 64, steps, scale, eta=eta, negative_prompt=negative_prompt, output_type='latent').images
-        hires = upscaler(prompt=gen_prompt, image=latents, num_inference_steps=random.randint(20, 60), guidance_scale=0).images[0]
+        hires = generator(gen_prompt, height * 64, width * 64, steps, scale, eta=eta, negative_prompt=negative_prompt).images[0]
+        # latents = generator(gen_prompt, height * 64, width * 64, steps, scale, eta=eta, negative_prompt=negative_prompt, output_type='latent').images
+        # hires = upscaler(prompt=gen_prompt, image=latents, num_inference_steps=random.randint(20, 60), guidance_scale=0).images[0]
         hires.save(f'{outdir}/{file_prompt} — {scheduler} ST{steps} TM{int(time.time() - stopwatch)} {int(time.time()) % 10000}.jpg')
 
         for key in ['prompt', 'seed']:
