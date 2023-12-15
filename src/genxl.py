@@ -155,8 +155,8 @@ for roll in range(limits['total']):
             negative_prompt=negative_prompt,
             height=height, width=width, num_inference_steps=steps,
             denoising_end=noise, guidance_scale=scale,
-            callback_on_step_end=callback,
-            callback_on_step_end_inputs=["latents"],
+            # callback_on_step_end=callback,
+            # callback_on_step_end_inputs=["latents"],
             output_type="latent"
         ).images
         image = refiner(

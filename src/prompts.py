@@ -137,7 +137,7 @@ def qualify(target, scope=[], limit=0, qualities=[], multiple=False, adjective=F
 
 subject_qualities = {
     'some': [0, 2, 1, .5, .1],
-    'char': [.5, 3, 1.5, .5, .1],
+    'char': [.5, 3, 2.5, 1.5, .4],
     'chim': [1, 1, .1],
     'scene': [1, 1, .5, .2],
     'arch': [2, 2, .5, .1],

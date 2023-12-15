@@ -30,7 +30,7 @@ async def post(context):
             except:
                 pass
             os.rename(f'{posting_dir}/{file}', f'{posting_dir}/{_file.replace(".jpg", " POSTED.jpg")}')
-            wait = random.randint(1, 1000)
+            wait = random.randint(1000, 10000)
             print(f'Waiting for {wait} secs...')
             await asyncio.sleep(wait)
         except:
