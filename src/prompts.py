@@ -136,7 +136,7 @@ def qualify(target, scope=[], limit=0, qualities=[], multiple=False, adjective=F
 
 
 subject_qualities = {
-    'some': [0, 2, 1, .5, .1],
+    'some': [1, 2, 3, 1.5, .5, .1, .05],
     'char': [.5, 3, 2.5, 1.5, .4],
     'chim': [1, 1, .1],
     'scene': [1, 1, .5, .2],
@@ -147,7 +147,7 @@ subject_qualities = {
 
 def subject_gen(theme):
     multiple_limits = {
-        'some': .9,
+        'some': .92,
         'char': .9,
         'chim': .99,
         'scene': 1,

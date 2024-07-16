@@ -100,18 +100,22 @@ for roll in range(limits['total']):
         if raw_prompt.startswith('+'):
             raw_prompt = raw_prompt[1:]
             selectors = re.findall(r'\[[a-zA-Z0-9.|,-]+\]', raw_prompt)
-            minimum = 5 * (len(selectors) + 1)
+            minimum = 6 * (len(selectors) + 1)
         else:
             selectors = None
             minimum = 12
+        minimum = min(minimum, 25)
         limits['prompt'] = random.randint(minimum, int(minimum * 1.2))
         rolls['prompt'] = 1
 
     steps = random.randint(70, 200)
-    size = random.randint(15000, 40000)
+    size = random.randint(15000, 27000)
     ratio = random.uniform(8/20, 355/144)
     if random.random() > 0.4:
         ratio = ratio ** 0.5
+
+    ratio = random.choice([18/9, 9/20])
+
     height = round((size/ratio)**0.5)
     width = round(size/height)
     height = height*8
