@@ -67,15 +67,17 @@ for roll in range(limits['total']):
         limits['prompt'] = random.randint(minimum, minimum * 2)
         rolls['prompt'] = 1
 
-    steps = random.randint(10, 130)
-    size = random.randint(65, 85)
-    ratio = random.uniform(.5, 1.2)
-    if random.random() > 0.4:
+    limits['prompt'] = 1
+
+    steps = random.randint(90, 200)
+    size = random.randint(90, 130)
+    ratio = random.uniform(13/9, 17/9)
+    if random.random() > 0.2:
         ratio = ratio ** 0.5
     height = round((size/ratio)**0.5)
     width = round(size/height)
-    eta = random.uniform(0.75, 0.95)
-    scale = random.uniform(6, 11)
+    eta = random.uniform(0.85, 0.95)
+    scale = random.uniform(8, 12)
     gen_prompt = raw_prompt
     if selectors:
         for selector in selectors:
@@ -87,7 +89,7 @@ for roll in range(limits['total']):
         negation_threshold = 0.65
         negation = basic_negation + special_negation
     else:
-        negation_threshold = 0.25
+        negation_threshold = 0.75
         negation = basic_negation
 
     coin = random.random()
@@ -115,13 +117,13 @@ for roll in range(limits['total']):
               f'{rolls["prompt"]:>3} of {limits["prompt"] - 1:>3} — {"NEG " if negative_prompt else ""}{gen_prompt[:70] + "..." if len(gen_prompt) > 70 else gen_prompt}{" — NEW PROMPT" if rolls["prompt"] == 1 else ""}\n'
               f'{steps:>7} STEPS, {scale:>7.2f} SCALE, {eta:>7.2f} ETA, {scheduler}\n'
               f'{width:>2} × {height:>2} DIMENSIONS\n')
-        # hires = generator(gen_prompt, height * 64, width * 64, steps, scale, eta=eta, negative_prompt=negative_prompt).images[0]
-        latents = generator(gen_prompt, height * 64, width * 64, steps, scale, eta=eta, negative_prompt=negative_prompt, output_type='latent').images
-        hires = upscaler(prompt=gen_prompt, image=latents, num_inference_steps=random.randint(20, 60), guidance_scale=0).images[0]
+        # hires = generator(prompt=gen_prompt, height=height * 64, width=width * 64, num_inference_steps=steps, guidance_scale=scale, eta=eta, negative_prompt=negative_prompt).images[0]
+        latents = generator(prompt=gen_prompt, height=height * 64, width=width * 64, num_inference_steps=steps, guidance_scale=scale, eta=eta, negative_prompt=negative_prompt, output_type='latent').images
         # with torch.no_grad():
         #     lowres = generator.decode_latents(latents)
         #     lowres = generator.numpy_to_pil(lowres)[0]
         #     lowres.save(f'{outdir}/{file_prompt} — {scheduler} ST{steps} TM{int(time.time() - stopwatch)} {int(time.time()) % 10000}.lowres.jpg')
+        hires = upscaler(prompt=gen_prompt, image=latents, num_inference_steps=random.randint(20, 60), guidance_scale=0).images[0]
         hires.save(f'{outdir}/{file_prompt} — {scheduler} ST{steps} TM{int(time.time() - stopwatch)} {int(time.time()) % 10000}.jpg')
 
         for key in ['prompt', 'seed']:

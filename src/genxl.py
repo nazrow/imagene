@@ -108,9 +108,12 @@ for roll in range(limits['total']):
         limits['prompt'] = random.randint(minimum, int(minimum * 1.2))
         rolls['prompt'] = 1
 
-    steps = random.randint(70, 200)
+    limits['prompt'] = 1
+
+    steps = random.randint(90, 200)
     size = random.randint(15000, 27000)
-    ratio = random.uniform(8/20, 355/144)
+    # ratio = random.uniform(8/20, 355/144)
+    # ratio = random.uniform(13/9, 17/9)
     if random.random() > 0.4:
         ratio = ratio ** 0.5
 
@@ -133,7 +136,7 @@ for roll in range(limits['total']):
         negation_threshold = 0.95
         negation = basic_negation + special_negation
     else:
-        negation_threshold = 0.25
+        negation_threshold = 0.75
         negation = basic_negation
 
     coin = random.random()

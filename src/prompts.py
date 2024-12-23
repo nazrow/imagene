@@ -105,10 +105,17 @@ non_adjective_tags = [
 ]
 
 
-def qualify(target, scope=[], limit=0, qualities=[], multiple=False, adjective=False):
+def qualify(target, theme='', scope=[], limit=0, qualities=[], multiple=False, adjective=False):
     if not qualities:
         random.shuffle(scope)
         qualities = list(set(get_from_vocab(tag) for tag in scope[:limit]))
+        if theme == 'some':
+            some_scope = []
+            if random.random() > 0.1:
+                some_scope.append('equipment')
+            if random.random() > 0.6:
+                some_scope.append('dequipment')
+            qualities += list(set(get_from_vocab(tag) for tag in some_scope))
     qualities = [item for item in qualities if item is not None]
     if len(qualities):
         joiners = {}
@@ -172,7 +179,7 @@ def subject_gen(theme):
     else:
         subject_value = subject.value
     qualities_num = get_from_probability_array(subject_qualities[theme])
-    subject_value = qualify(subject_value, scope=subject.qualities, limit=qualities_num, multiple=multiple)
+    subject_value = qualify(subject_value, theme=theme, scope=subject.qualities, limit=qualities_num, multiple=multiple)
     if multiplier:
         if multiplier.value.startswith('_'):
             subject_value = f'{subject_value} {multiplier.value}'
